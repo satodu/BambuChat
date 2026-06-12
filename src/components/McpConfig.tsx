@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Cpu, RefreshCw, Radio, ShieldAlert, Plus, Trash2 } from 'lucide-react';
-import type { McpTool } from '../services/mcp';
+import type { McpTool, McpPrompt } from '../services/mcp';
 
 export interface McpPreset {
   id: string;
@@ -37,6 +37,8 @@ interface McpConfigProps {
   onDisconnect: () => void;
   onToggleTool: (toolName: string) => void;
   onRefreshTools: () => void;
+  prompts: McpPrompt[];
+  onSelectPrompt: (name: string) => void;
 }
 
 export const McpConfig: React.FC<McpConfigProps> = ({
@@ -65,7 +67,9 @@ export const McpConfig: React.FC<McpConfigProps> = ({
   onConnect,
   onDisconnect,
   onToggleTool,
-  onRefreshTools
+  onRefreshTools,
+  prompts = [],
+  onSelectPrompt
 }) => {
   const [expandedTool, setExpandedTool] = useState<string | null>(null);
   
@@ -386,6 +390,42 @@ export const McpConfig: React.FC<McpConfigProps> = ({
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* Discovered Prompts */}
+      {status === 'connected' && prompts && prompts.length > 0 && (
+        <div className="space-y-2 pt-2 border-t border-zinc-850">
+          <label className="text-xs font-medium text-zinc-300 flex items-center gap-1.5">
+            <Radio className="w-3.5 h-3.5 text-sky-400 animate-pulse" />
+            Server Prompts ({prompts.length})
+          </label>
+          <div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+            {prompts.map((prompt) => (
+              <div
+                key={prompt.name}
+                className="p-2 border border-zinc-800 bg-zinc-900/40 rounded transition-all hover:bg-zinc-900 flex flex-col gap-1.5"
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <span className="font-mono text-xs font-semibold text-zinc-200 truncate" title={prompt.name}>
+                    {prompt.name}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => onSelectPrompt(prompt.name)}
+                    className="text-[10px] bg-sky-950/40 hover:bg-sky-900/50 text-sky-400 font-bold border border-sky-900/60 px-2 py-0.5 rounded transition-all uppercase tracking-wider"
+                  >
+                    Load
+                  </button>
+                </div>
+                {prompt.description && (
+                  <p className="text-[10px] text-zinc-400 leading-normal pl-0.5">
+                    {prompt.description}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>

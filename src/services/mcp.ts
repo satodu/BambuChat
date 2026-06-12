@@ -9,6 +9,16 @@ export interface McpTool {
   };
 }
 
+export interface McpPrompt {
+  name: string;
+  description?: string;
+  arguments?: Array<{
+    name: string;
+    description?: string;
+    required?: boolean;
+  }>;
+}
+
 export interface McpMessageLog {
   timestamp: string;
   direction: 'sent' | 'received';
@@ -30,6 +40,7 @@ export class McpClient {
   
   public status: 'disconnected' | 'connecting' | 'connected' | 'error' = 'disconnected';
   public tools: McpTool[] = [];
+  public prompts: McpPrompt[] = [];
   public serverInfo: { name: string; version: string } | null = null;
 
   constructor() {}
@@ -172,6 +183,7 @@ export class McpClient {
     }
     this.ssePostUrl = '';
     this.tools = [];
+    this.prompts = [];
     this.serverInfo = null;
     this.setStatus('disconnected');
     
@@ -278,8 +290,13 @@ export class McpClient {
       }).catch(err => console.error('Failed to send initialized notification:', err));
     }
 
-    // Immediately fetch tools
+    // Immediately fetch tools and prompts
     await this.refreshTools();
+    try {
+      await this.refreshPrompts();
+    } catch (err) {
+      console.log('Prompts not supported or failed to fetch:', err);
+    }
   }
 
   // Fetch / Refresh available tools
@@ -298,6 +315,27 @@ export class McpClient {
   // Call a tool on the MCP server
   public async callTool(name: string, args: Record<string, any> = {}): Promise<any> {
     return this.sendRequest('tools/call', {
+      name,
+      arguments: args
+    });
+  }
+
+  // Fetch / Refresh available prompts
+  public async refreshPrompts(): Promise<McpPrompt[]> {
+    try {
+      const response = await this.sendRequest('prompts/list');
+      this.prompts = response.prompts || [];
+      return this.prompts;
+    } catch (err) {
+      console.error('Failed to retrieve MCP prompts:', err);
+      this.prompts = [];
+      throw err;
+    }
+  }
+
+  // Get a specific prompt by name
+  public async getPrompt(name: string, args: Record<string, any> = {}): Promise<any> {
+    return this.sendRequest('prompts/get', {
       name,
       arguments: args
     });

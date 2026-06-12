@@ -7,7 +7,7 @@ import type { McpPreset } from './components/McpConfig';
 import { McpInspector } from './components/McpInspector';
 import { ChatInterface } from './components/ChatInterface';
 import { McpClient } from './services/mcp';
-import type { McpTool, McpMessageLog } from './services/mcp';
+import type { McpTool, McpMessageLog, McpPrompt } from './services/mcp';
 import { generateMessage } from './services/ai';
 import type { ChatMessage } from './services/ai';
 
@@ -21,9 +21,9 @@ const DEFAULT_KEYS: ApiKeysConfig = {
 };
 
 const DEFAULT_SYSTEM_PROMPT = 
-  "You are a helpful AI assistant that is connected to a local workspace via Model Context Protocol (MCP).\n" +
-  "You have access to a set of custom tools. Whenever the user asks you a question that requires utilizing these tools, " +
-  "you MUST invoke them. Present all tool inputs and outputs transparently. Always answer in the language the user speaks.";
+  "You are a helpful AI assistant. You have access to a set of tools from the Model Context Protocol (MCP) server. " +
+  "Use these tools to help the user with their requests. " +
+  "Always answer in the language the user speaks.";
 
 function App() {
   // Config States
@@ -99,6 +99,7 @@ function App() {
   const [errorMsg, setErrorMsg] = useState<string>('');
   const [tools, setTools] = useState<McpTool[]>([]);
   const [disabledTools, setDisabledTools] = useState<string[]>([]);
+  const [prompts, setPrompts] = useState<McpPrompt[]>([]);
   const [serverInfo, setServerInfo] = useState<{ name: string; version: string } | null>(null);
   const [logs, setLogs] = useState<McpMessageLog[]>([]);
 
@@ -162,9 +163,11 @@ function App() {
       
       if (newStatus === 'connected') {
         setTools(client.tools);
+        setPrompts(client.prompts);
         setServerInfo(client.serverInfo);
       } else if (newStatus === 'disconnected' || newStatus === 'error') {
         setTools([]);
+        setPrompts([]);
         setServerInfo(null);
       }
     });
@@ -201,9 +204,46 @@ function App() {
       try {
         const refreshed = await mcpClientRef.current.refreshTools();
         setTools(refreshed);
+        try {
+          const refreshedPrompts = await mcpClientRef.current.refreshPrompts();
+          setPrompts(refreshedPrompts);
+        } catch (promptErr) {
+          console.log('Prompts refresh not supported:', promptErr);
+        }
       } catch (err) {
         console.error('Failed to refresh tools:', err);
       }
+    }
+  };
+
+  const handleSelectPrompt = async (promptName: string) => {
+    if (!mcpClientRef.current || status !== 'connected') return;
+    try {
+      setIsLoading(true);
+      const res = await mcpClientRef.current.getPrompt(promptName);
+      if (res && res.messages && res.messages.length > 0) {
+        const firstMsg = res.messages[0];
+        const contentText = typeof firstMsg.content === 'string'
+          ? firstMsg.content
+          : firstMsg.content?.text || '';
+        
+        if (contentText) {
+          setSystemPrompt(contentText);
+          setMessages(prev => [
+            ...prev,
+            {
+              id: `system_${Date.now()}`,
+              role: 'assistant',
+              content: `🔄 Loaded instructions from MCP Prompt **${promptName}** into System Prompt.`
+            }
+          ]);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load MCP prompt:', err);
+      alert(`Failed to load MCP prompt: ${(err as Error).message}`);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -459,6 +499,8 @@ function App() {
             onDisconnect={handleDisconnect}
             onToggleTool={handleToggleTool}
             onRefreshTools={handleRefreshTools}
+            prompts={prompts}
+            onSelectPrompt={handleSelectPrompt}
           />
         </aside>
 
@@ -470,6 +512,7 @@ function App() {
             onSystemPromptChange={setSystemPrompt}
             isLoading={isLoading}
             onSendMessage={handleSendMessage}
+            onResetSystemPrompt={() => setSystemPrompt(DEFAULT_SYSTEM_PROMPT)}
           />
         </section>
 

@@ -8,6 +8,7 @@ interface ChatInterfaceProps {
   onSystemPromptChange: (prompt: string) => void;
   isLoading: boolean;
   onSendMessage: (content: string) => void;
+  onResetSystemPrompt?: () => void;
 }
 
 // Simple parser to format markdown-like text (bold, inline code, and code blocks) safely
@@ -75,7 +76,8 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
   systemPrompt,
   onSystemPromptChange,
   isLoading,
-  onSendMessage
+  onSendMessage,
+  onResetSystemPrompt
 }) => {
   const [input, setInput] = useState('');
   const [showSystemPrompt, setShowSystemPrompt] = useState(false);
@@ -117,14 +119,25 @@ export const ChatInterface: React.FC<ChatInterfaceProps> = ({
         </button>
 
         {showSystemPrompt && (
-          <div className="p-3 bg-zinc-950/40 border-t border-zinc-850">
+          <div className="p-3 bg-zinc-950/40 border-t border-zinc-850 space-y-2">
             <textarea
               value={systemPrompt}
               onChange={(e) => onSystemPromptChange(e.target.value)}
               placeholder="e.g. You are an expert AI assistant that uses the available tools..."
-              rows={3}
+              rows={4}
               className="w-full p-2 text-xs bg-zinc-900 border border-zinc-800 rounded text-zinc-300 focus:outline-none focus:border-sky-500 transition-all font-mono resize-none"
             />
+            {onResetSystemPrompt && (
+              <div className="flex justify-end">
+                <button
+                  type="button"
+                  onClick={onResetSystemPrompt}
+                  className="px-2.5 py-1 text-[10px] font-bold text-zinc-400 hover:text-zinc-200 border border-zinc-800 hover:bg-zinc-900 rounded uppercase tracking-wider transition-all"
+                >
+                  Reset to Default
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

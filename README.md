@@ -39,7 +39,7 @@ graph TD
     BridgeProxy --> Claude[Anthropic Claude API]
     
     Browser -- WebSocket (JSON-RPC) --> BridgeWS[Bridge WS Server]
-    BridgeWS -- Stdio (Stdin/Stdout) --> MCPServer[Local MCP Server (BambuMind, SQLite, etc.)]
+    BridgeWS -- Stdio (Stdin/Stdout) --> MCPServer["Local MCP Server (BambuMind, SQLite, etc.)"]
 ```
 
 ### 1. The Client-Side Frontend (React + Vite)

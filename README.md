@@ -1,6 +1,11 @@
 # BambuChat 🎋
 
+### 🚀 **Live Demo:** [https://satodu.github.io/BambuChat/](https://satodu.github.io/BambuChat/)
+
 BambuChat is a lightweight, zero-login, client-side chat interface designed for developers to interact with LLM providers (**Google Gemini, OpenAI, Anthropic Claude**) and test **Model Context Protocol (MCP)** servers locally or over remote endpoints.
+
+### 🌐 **Fully MCP-Agnostic**
+BambuChat is completely **agnostic to the MCP server content**. It dynamically queries and discovers server capabilities via the MCP protocol—automatically fetching and rendering available **Tools**, **Prompts**, and resources on-the-fly. This makes it a generic, reusable debugging and testing environment for *any* local or remote MCP server (such as filesystem access, databases, APIs, or specialized applications like BambuMind).
 
 It is designed to be fully static, allowing it to be compiled and hosted completely free of charge on **GitHub Pages** (via the included GitHub Actions workflow).
 
